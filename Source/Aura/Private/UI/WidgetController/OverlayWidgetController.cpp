@@ -29,11 +29,18 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		AddUObject(this, &UOverlayWidgetController::MaxManaChanged);
 
 	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetsTags.AddLambda(
-		[](const FGameplayTagContainer& AssetTags) 
+		[this](const FGameplayTagContainer& AssetTags) 
 		{
 			for (const FGameplayTag& Tag : AssetTags)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Effect Applied: %s"), *Tag.ToString());
+				// For example, if Tag = Message.HealthPotion
+				// "Health.HealthPotion".MatchesTag("Health") will return True, "Health".MatchesTag("Health.HealthPotion") will return False
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+				if(Tag.MatchesTag(MessageTag))
+				{
+					const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+					MessageWidgetRowDelegate.Broadcast(*Row);
+				}
 			}
 		}
 	);
